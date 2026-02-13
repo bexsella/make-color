@@ -77,9 +77,6 @@ make_color :: proc(colortext_path, output_path : string) -> (bool, string) {
             append(&color_list, Color_List {name = strings.clone(color_name), code = u32(hex) })
         }
     }
-
-    fmt.printfln("%d", len(color_list))
-
     // Now we write the output
     b := strings.builder_make()
     w := strings.to_writer(&b)
@@ -88,7 +85,6 @@ make_color :: proc(colortext_path, output_path : string) -> (bool, string) {
         filepath.base(colortext_path))
 
     for comment in comment_list {
-        fmt.printfln("%s", comment)
         fmt.wprintfln(w, "%s", comment)
     }
 
