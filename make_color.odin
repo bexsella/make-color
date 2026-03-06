@@ -25,18 +25,14 @@ main :: proc() {
 }
 
 make_color :: proc(colortext_path, output_path : string) -> (bool, string) {
-    Color_List :: struct {
+    Color_Entry :: struct {
         name: string,
         code: u32
     }
 
-    arena : virtual.Arena
-    alloc := virtual.arena_allocator(&arena)
-    defer virtual.arena_destroy(&arena)
+    context.allocator = context.temp_allocator
 
-    context.allocator = alloc
-
-    color_list: [dynamic]Color_List
+    color_list: [dynamic]Color_Entry
     comment_list: [dynamic]string
 
     data, success := os.read_entire_file(colortext_path)
@@ -74,7 +70,7 @@ make_color :: proc(colortext_path, output_path : string) -> (bool, string) {
                 continue
             }
 
-            append(&color_list, Color_List {name = strings.clone(color_name), code = u32(hex) })
+            append(&color_list, Color_Entry {name = strings.clone(color_name), code = u32(hex) })
         }
     }
     // Now we write the output
@@ -100,7 +96,7 @@ make_color :: proc(colortext_path, output_path : string) -> (bool, string) {
     fmt.wprintln(w, "RGBA_Color :: [4]f32\n")
 
     // write data:
-    fmt.wprintfln(w, "Colors :: [Color_Names]RGBA_Color {{")
+    fmt.wprintfln(w, "Colors := [Color_Names]RGBA_Color {{")
     for color in color_list {
         fmt.wprintfln(w, "\t.%s = {{%.6f, %.6f, %.6f, %.6f},", 
             color.name,
