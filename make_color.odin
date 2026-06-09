@@ -1,12 +1,7 @@
-// 
-// 
-// 
-
 package make_color
 
 import "core:fmt"
 import "core:os"
-import "core:mem/virtual"
 import "core:strings"
 import "core:strconv"
 import "core:path/filepath"
@@ -30,14 +25,12 @@ make_color :: proc(colortext_path, output_path : string) -> (bool, string) {
         code: u32
     }
 
-    context.allocator = context.temp_allocator
-
     color_list: [dynamic]Color_Entry
     comment_list: [dynamic]string
 
-    data, success := os.read_entire_file(colortext_path)
+    data, err := os.read_entire_file(colortext_path, context.allocator)
 
-    if !success {
+    if err != nil {
         return false, "Failed to read in color text file."
     }
 
@@ -84,7 +77,12 @@ make_color :: proc(colortext_path, output_path : string) -> (bool, string) {
         fmt.wprintfln(w, "%s", comment)
     }
 
-    fmt.wprintfln(w, "package %s\n", filepath.short_stem(output_path))
+    output_dir := filepath.dir(output_path)
+    last_separator_idx := strings.last_index_any(output_dir, filepath.SEPARATOR_CHARS)
+
+    out_package := output_dir[last_separator_idx+1:] if last_separator_idx > 0 else output_dir
+
+    fmt.wprintfln(w, "package %s\n", out_package)
 
     // write the enum
     fmt.wprintfln(w, "Color_Names :: enum {{")
@@ -109,7 +107,7 @@ make_color :: proc(colortext_path, output_path : string) -> (bool, string) {
 
     s := strings.to_string(b)
 
-    if !os.write_entire_file(output_path, transmute([]u8)s) {
+    if os.write_entire_file(output_path, transmute([]u8)s) != nil {
         return false, "Failed to write output."
     }
 
